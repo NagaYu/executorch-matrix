@@ -1,0 +1,107 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "executorch-matrix"
+version = "0.1.0"
+description = "Compare ExecuTorch hardware backends and quantization levels for your model on your actual device, and get a reasoned recommendation."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "NagaYu", email = "yn19940713@icloud.com" }]
+keywords = [
+    "executorch",
+    "pytorch",
+    "on-device-ai",
+    "benchmark",
+    "quantization",
+    "edge-ai",
+    "mobile",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries",
+]
+
+# The ExecuTorch toolchain is a hard runtime dependency: this tool orchestrates
+# ExecuTorch's own export, quantization (torchao), and profiling (ETDump via the
+# devtools Inspector). Verified against executorch 1.3.x on Python 3.10-3.13
+# (see docs/executorch-api-reference.md). These are imported LAZILY inside the
+# export/measure modules so the CLI, catalog, reporting, and recommendation
+# paths start fast and never require a working export toolchain to read a report.
+# torch/torchao are pinned to the line executorch 1.3.x was built and tested
+# against. executorch 1.3.1 only declares `torch>=2.12.0a0`, which is too loose:
+# torch 2.13 changed the C++ ABI (breaks executorch's prebuilt runtime .so) and
+# dropped op overloads that torchao's PT2E passes rely on. Pinning to 2.12.x
+# keeps the prebuilt binaries and the quantization passes working.
+dependencies = [
+    "executorch>=1.3,<2",
+    "torch>=2.12,<2.13",
+    "torchao>=0.17,<0.18",
+    "typer>=0.12",
+    "rich>=13.7",
+]
+
+[dependency-groups]
+# uv syncs the `dev` group by default, so `uv sync && uv run pytest` works from a
+# clean clone with no extra flags (per the Definition of Done).
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[project.urls]
+Homepage = "https://github.com/NagaYu/executorch-matrix"
+Repository = "https://github.com/NagaYu/executorch-matrix"
+Issues = "https://github.com/NagaYu/executorch-matrix/issues"
+Changelog = "https://github.com/NagaYu/executorch-matrix/blob/main/CHANGELOG.md"
+
+[project.scripts]
+executorch-matrix = "executorch_matrix.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/executorch_matrix"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4"]
+ignore = [
+    "E501",  # line length handled by formatter
+    "B008",  # typer requires Option()/Argument() calls in argument defaults
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["executorch_matrix"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "device: tests that require a real connected target device (not run in CI)",
+    "export: tests that require the ExecuTorch toolchain (the `export` extra)",
+]
+
+[tool.mypy]
+# Analysis target 3.12 (our runtime floor is 3.10 via `from __future__ import
+# annotations`); 3.12 avoids choking on numpy's 3.12+ typed stubs.
+python_version = "3.12"
+packages = ["executorch_matrix"]
+ignore_missing_imports = true
+warn_unused_ignores = false

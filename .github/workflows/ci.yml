@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Note: device-measurement tests (marked `@pytest.mark.device`) require a real
+# connected target device (Android via ADB) and are NOT run in CI. They must be
+# run manually — see CONTRIBUTING.md for the manual verification checklist.
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Sync (core + dev; installs the ExecuTorch toolchain)
+        run: uv sync
+      - name: Ruff lint
+        run: uv run ruff check .
+      - name: Ruff format check
+        run: uv run ruff format --check .
+      - name: Mypy
+        run: uv run mypy src
+
+  test:
+    name: Unit tests (export-only + parsing, no device)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install ${{ matrix.python-version }}
+      - name: Sync (core + dev; installs the ExecuTorch toolchain)
+        run: uv sync
+      - name: Run tests
+        # Excludes @device tests (need real connected hardware). Export-only and
+        # ETDump-parsing tests run for real against the installed toolchain.
+        run: uv run pytest -m "not device"

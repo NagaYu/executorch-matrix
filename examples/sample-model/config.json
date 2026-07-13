@@ -1,0 +1,6 @@
+{
+  "model": "tiny",
+  "description": "Small conv classifier used for the executorch-matrix quickstart. Resolves to the built-in 'tiny' model so the example runs with no downloads.",
+  "suggested_backends": ["portable", "xnnpack"],
+  "suggested_quantize": ["none", "int8", "int4"]
+}

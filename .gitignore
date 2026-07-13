@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# uv
+.uv/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# ExecuTorch / model artifacts (generated, never committed)
+*.pte
+*.ptd
+*.etdump
+*.etrecord
+# ...except the committed parser test fixture (a real ETDump binary):
+!tests/fixtures/*.etdump
+*.bin
+*.pt
+*.pth
+*.model
+models/
+_variants/
+
+# executorch-matrix output
+executorch-matrix-report.json
+executorch-matrix-report.md
+*.catalog.json
+.executorch-matrix/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
